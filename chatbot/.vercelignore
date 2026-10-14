@@ -1,5 +1,7 @@
 # Only api/, faqbot/, data/, public/ and requirements.txt are needed in production.
 .env
+.env.*
+.vercel
 .venv/
 __pycache__/
 evaluation/

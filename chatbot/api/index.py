@@ -104,8 +104,8 @@ def chat(req: ChatRequest):
 
 
 # Locally there is no CDN in front of the app, so serve public/ from here.
-# On Vercel, public/ is served by the CDN and only /api/* reaches this function
-# (public/ isn't bundled, hence check_dir=False).
-app.mount(
-    "/", StaticFiles(directory=APP_ROOT / "public", html=True, check_dir=False), name="public"
-)
+# On Vercel, public/ is served by the CDN and isn't inside the function bundle, so
+# the mount is skipped (an unconditional mount made every unmatched path a 500).
+PUBLIC_DIR = APP_ROOT / "public"
+if PUBLIC_DIR.is_dir():
+    app.mount("/", StaticFiles(directory=PUBLIC_DIR, html=True), name="public")
