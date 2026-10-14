@@ -37,7 +37,7 @@ def rank_of(doc_id, results):
 
 def main():
     # rewrite=True: this script compares searching with and without the rewrite.
-    bot = create_bot(get_groq_client(max_retries=6), search_mode="hybrid", rewrite=True)
+    bot = create_bot(get_groq_client(max_retries=6, timeout=60), search_mode="hybrid", rewrite=True)
     if bot.search_mode != "hybrid":
         sys.exit("Vector search failed to load; see the log above.")
     rows = []

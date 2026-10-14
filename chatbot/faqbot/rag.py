@@ -5,13 +5,14 @@ from openai import OpenAI
 from faqbot.config import (
     CHAT_MODEL,
     DEFAULT_COURSE,
+    FALLBACK_MODELS,
     MAX_HISTORY_MESSAGES,
     NUM_RESULTS,
     REWRITE_MODEL,
     REWRITE_QUERIES,
     SEARCH_MODE,
 )
-from faqbot.llm import chat_completion
+from faqbot.llm import chat_completion, chat_completion_with_fallback
 from faqbot.prompts import (
     ANSWER_INSTRUCTIONS,
     REWRITE_INSTRUCTIONS,
@@ -57,6 +58,7 @@ class ConversationalRAG:
         encoder=None,
         search_mode: str = SEARCH_MODE,
         chat_model: str = CHAT_MODEL,
+        fallback_models: list[str] | None = None,
         rewrite_model: str = REWRITE_MODEL,
         rewrite: bool = REWRITE_QUERIES,
         num_results: int = NUM_RESULTS,
@@ -71,6 +73,7 @@ class ConversationalRAG:
         self.encoder = encoder  # anything with .encode(list[str]) -> array of unit vectors
         self.search_mode = search_mode
         self.chat_model = chat_model
+        self.fallback_models = FALLBACK_MODELS if fallback_models is None else fallback_models
         self.rewrite_model = rewrite_model
         self.rewrite = rewrite
         self.num_results = num_results
@@ -155,7 +158,8 @@ class ConversationalRAG:
                 question=question, context=self.build_context(search_results)
             ),
         })
-        return chat_completion(self.client, self.chat_model, messages)
+        models = [self.chat_model, *self.fallback_models]
+        return chat_completion_with_fallback(self.client, models, messages)
 
     def chat(
         self, question: str, history: list[dict] | None = None, course: str = DEFAULT_COURSE

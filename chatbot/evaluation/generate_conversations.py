@@ -65,7 +65,7 @@ def main():
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
 
-    client = get_groq_client(max_retries=6)
+    client = get_groq_client(max_retries=6, timeout=60)
     groups = sample_groups(load_documents(), args.course, args.n, random.Random(args.seed))
 
     conversations = []

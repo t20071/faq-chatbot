@@ -36,6 +36,12 @@ except ImportError:
 
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 CHAT_MODEL = os.getenv("CHAT_MODEL", "openai/gpt-oss-20b")
+# Tried in order when CHAT_MODEL is rate limited (Groq limits are per model).
+FALLBACK_MODELS = [
+    m.strip() for m in os.getenv("FALLBACK_MODELS", "openai/gpt-oss-120b").split(",") if m.strip()
+]
+# Per LLM request. Two attempts (primary + fallback) must fit in Vercel's 30 s limit.
+LLM_TIMEOUT_SECONDS = 12.0
 REWRITE_MODEL = os.getenv("REWRITE_MODEL", CHAT_MODEL)
 # Rewriting follow-ups costs an extra LLM call (~1 s) and didn't improve retrieval in
 # evaluation (hybrid hit rate 0.945 with or without it), so it's off by default.

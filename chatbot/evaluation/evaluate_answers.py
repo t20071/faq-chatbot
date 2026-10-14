@@ -116,7 +116,7 @@ def main():
     parser.add_argument("--search-mode", default="hybrid", choices=["hybrid", "bm25", "vector"])
     args = parser.parse_args()
 
-    client = get_groq_client(max_retries=6)
+    client = get_groq_client(max_retries=6, timeout=60)
     bot = create_bot(client, search_mode=args.search_mode, rewrite=args.rewrite)
 
     conversations = [c for c in load_conversations() if args.filter in c["id"]][: args.limit]

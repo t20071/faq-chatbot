@@ -4,6 +4,8 @@ A **multi-turn RAG chatbot** that answers students' questions about the DataTalk
 
 Ask *"Can I still join the course?"* and then a follow-up such as *"and will I get a certificate that way?"*. The bot understands what "that way" refers to, finds the right FAQ entries with **hybrid search** (keyword + semantic vectors), answers from them, and shows its sources.
 
+**Live demo:** https://faq-chatbot-rho.vercel.app
+
 Built during **LLM Zoomcamp, Modules 1–2: RAG and Vector Search**.
 
 ---
@@ -29,7 +31,7 @@ Built during **LLM Zoomcamp, Modules 1–2: RAG and Vector Search**.
 | **Architecture** | RAG (Retrieval-Augmented Generation) | retrieve → augment prompt → generate |
 | **LLM provider** | [Groq](https://groq.com) | Fast inference through an OpenAI-compatible API |
 | **LLMs** | `openai/gpt-oss-20b` | Writes the answers (and optionally rewrites follow-up questions) |
-| | `openai/gpt-oss-120b` | LLM-as-a-judge for evaluation |
+| | `openai/gpt-oss-120b` | Fallback answer model when the 20b model hits its rate limit; LLM-as-a-judge for evaluation |
 | **LLM SDK** | `openai` Python SDK | Pointed at Groq's `base_url` |
 | **Embedding model** | [`all-MiniLM-L6-v2`](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) | 384-dim sentence embeddings, pinned to a fixed revision |
 | **Embedding library** | [sentence-transformers](https://huggingface.co/sentence-transformers) (ONNX backend) | Turns all 1,427 FAQ entries into vectors (`data/embeddings.npy`) |
@@ -216,6 +218,7 @@ All settings are read from `.env`. Only the API key is required.
 | `GROQ_API_KEY` | — (required) | Groq API key |
 | `SEARCH_MODE` | `hybrid` | `hybrid` (keyword + vector), `bm25` (keyword only) or `vector` (semantic only) |
 | `CHAT_MODEL` | `openai/gpt-oss-20b` | Model that writes the answers |
+| `FALLBACK_MODELS` | `openai/gpt-oss-120b` | Comma-separated models tried in order when `CHAT_MODEL` is rate limited. Groq's limits are per model, so this keeps the bot answering |
 | `REWRITE_QUERIES` | `false` | `true` adds an LLM call that rewrites follow-ups into standalone search queries (+~1 s per answer, no retrieval gain in our evaluation) |
 | `REWRITE_MODEL` | same as `CHAT_MODEL` | Model used when `REWRITE_QUERIES=true` |
 | `JUDGE_MODEL` | `openai/gpt-oss-120b` | Model that grades answers during evaluation |
@@ -226,15 +229,27 @@ The embedding model (`all-MiniLM-L6-v2`) and its pinned revision are set in `cha
 
 ## Deploy to Vercel
 
-```bash
-cd chatbot
-npx vercel          # first time: log in and link the project
-npx vercel --prod   # deploy to production
-```
+**Live:** https://faq-chatbot-rho.vercel.app
 
-Then in the Vercel dashboard, open **Settings → Environment Variables**, add `GROQ_API_KEY`, and redeploy.
+The Vercel project is connected to this GitHub repository:
 
-If you deploy from GitHub instead, import the repo in Vercel and set **Root Directory** to the `chatbot` folder.
+| Action | Result |
+|---|---|
+| `git push` to `main` | automatic **production** deployment |
+| Push to any other branch or open a pull request | automatic **preview** deployment with its own URL |
+
+**Project settings** (already configured):
+- **Root Directory:** `chatbot`. Framework: FastAPI (auto-detected).
+- **Environment variables:** `GROQ_API_KEY` (encrypted, Production + Preview).
+
+**To set it up from scratch** (e.g. for a fork):
+1. In Vercel, choose **Add New → Project**, import the GitHub repo and set **Root Directory** to `chatbot`.
+2. Under **Settings → Environment Variables**, add `GROQ_API_KEY`.
+3. Deploy. Or from the CLI: `cd chatbot && vercel link && vercel --prod`.
+
+Don't add a `rewrites` rule for `/api/*` to `vercel.json`. Vercel routes requests to the FastAPI app by itself, and a rewrite makes FastAPI receive `/api/index` instead of the real path, so GET routes return 404.
+
+**Staying within the 30 s function limit:** the web app never waits on Groq rate limits. The OpenAI SDK would otherwise sleep for Groq's `Retry-After` (about 60 s) and the request would time out. Instead, a rate-limited model is skipped for the next one in `FALLBACK_MODELS`, and if all are exhausted the user sees a "busy, try again" message.
 
 **How vector search fits on Vercel**
 - Vercel installs only `chatbot/requirements.txt`: FastAPI, OpenAI, NumPy, ONNX Runtime and tokenizers, with **no PyTorch**.
@@ -321,6 +336,6 @@ The 90 MB full-precision model gave the same hit rates (hybrid MRR 0.880), so th
 | `An Application Control policy has blocked this file … torch_python.dll` | Windows Smart App Control blocked a PyTorch DLL. This project installs CPU-only PyTorch from PyTorch's own index on Python 3.14, which loads on this machine. Keep `.python-version` at `3.14` and run `uv sync` |
 | `embeddings.npy is out of date` | The FAQ data changed. Run `uv run python chatbot/scripts/build_embeddings.py` |
 | Log shows `Vector search unavailable; falling back to BM25` | The model files in `chatbot/models/` are missing and couldn't be downloaded. The bot still works with keyword search. Run `uv run python chatbot/scripts/build_embeddings.py` to restore them |
-| Chat says *"The assistant is busy right now"* | Groq's free tier allows **200,000 tokens per day** for `gpt-oss-20b`; each answer uses roughly 1–2k, so very roughly 100–200 answers a day. Wait for the limit to reset, or upgrade to Groq's Dev tier for a public site |
+| Chat says *"The assistant is busy right now"* | Every model in `CHAT_MODEL` + `FALLBACK_MODELS` hit its Groq rate limit. The free tier allows **200,000 tokens per day per model**, and each answer uses roughly 1–2k, so very roughly 100–200 answers a day per model. Wait for the limit to reset, add another fallback model, or upgrade to Groq's Dev tier for a public site |
 | Evaluation is slow or hits `429` errors | Groq's free tier is rate-limited. The client retries automatically; use `--limit` for quick runs |
 | Notebook can't import `llm_zoomcamp_dtc` | Select the project's `.venv` as the notebook kernel |
