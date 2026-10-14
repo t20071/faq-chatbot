@@ -1,0 +1,26 @@
+[
+ {
+  "id": "stock-markets-analytics-zoomcamp",
+  "name": "Stock Markets Analytics Zoomcamp"
+ },
+ {
+  "id": "mlops-zoomcamp",
+  "name": "MLOps Zoomcamp"
+ },
+ {
+  "id": "llm-zoomcamp",
+  "name": "LLM Zoomcamp"
+ },
+ {
+  "id": "data-engineering-zoomcamp",
+  "name": "Data Engineering Zoomcamp"
+ },
+ {
+  "id": "machine-learning-zoomcamp",
+  "name": "ML Zoomcamp"
+ },
+ {
+  "id": "ai-dev-tools-zoomcamp",
+  "name": "AI Dev Tools Zoomcamp"
+ }
+]

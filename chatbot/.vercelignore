@@ -1,0 +1,7 @@
+# Only api/, faqbot/, data/, public/ and requirements.txt are needed in production.
+.env
+.venv/
+__pycache__/
+evaluation/
+scripts/
+tests/

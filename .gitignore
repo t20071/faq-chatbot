@@ -1,0 +1,36 @@
+# Secrets: commit .env.example, never .env
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.pytest_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Generated databases (rebuild with: uv run build-faq-db)
+database/*.db
+database/*.db-shm
+database/*.db-wal
+
+# Chatbot evaluation output (regenerate with the evaluation scripts)
+chatbot/evaluation/results/
+
+# Vercel
+.vercel/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/

@@ -1,0 +1,11 @@
+{
+  "functions": {
+    "api/index.py": {
+      "includeFiles": "{faqbot/**,data/**,models/**}",
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/api/index" }
+  ]
+}

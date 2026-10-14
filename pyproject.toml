@@ -1,0 +1,71 @@
+[project]
+name = "llm-zoomcamp-dtc"
+version = "0.1.0"
+description = "FAQ chatbot: a multi-turn RAG assistant over the DataTalksClub course FAQ"
+readme = "README.md"
+authors = [
+    { name = "Sharad Pardhe", email = "t20071@users.noreply.github.com" }
+]
+# Vercel runs 3.12 (chatbot/.python-version), so the code must stay 3.12-compatible.
+# Locally we use 3.14 (.python-version): its CPU PyTorch build passes Windows Application Control.
+requires-python = ">=3.12"
+dependencies = [
+    # LLM + data
+    "openai>=1.50",
+    "python-dotenv>=1.0",
+    "requests>=2.31",
+    # Search indexes used by the notebooks and database/
+    "minsearch>=0.2.0",
+    "sqlitesearch>=0.3.0",
+    # Chatbot web app
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    # Vector search: query-time encoder (MiniLM as ONNX, also used on Vercel)
+    "numpy>=2.0",
+    "onnxruntime>=1.20",
+    "tokenizers>=0.20",
+    # Embeddings: sentence-transformers builds the document vectors offline
+    "sentence-transformers[onnx]>=5.0",
+    "torch>=2.4",
+    # Notebooks
+    "ipykernel>=6.29",
+    "jupyter>=1.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "httpx>=0.27",
+    "ruff>=0.6",
+]
+
+[project.scripts]
+build-faq-db = "llm_zoomcamp_dtc.sqlite_index:main"
+
+# CPU-only PyTorch from PyTorch's own index: smaller than the PyPI build, and the
+# PyPI build's DLLs are blocked by Windows Application Control on this machine.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu" }]
+
+[build-system]
+requires = ["uv_build>=0.12.23,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["chatbot/tests"]
+pythonpath = ["chatbot"]
+
+[tool.ruff]
+line-length = 100
+extend-exclude = ["*.ipynb"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["llm_zoomcamp_dtc", "faqbot", "evaluation", "api", "tests"]

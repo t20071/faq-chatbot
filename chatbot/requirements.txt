@@ -1,0 +1,7 @@
+# Production dependencies installed by Vercel. Local development uses ../pyproject.toml.
+fastapi>=0.115
+openai>=1.50
+# Vector search: MiniLM query encoder via ONNX Runtime (no PyTorch in production)
+numpy>=2.0
+onnxruntime>=1.20
+tokenizers>=0.20
